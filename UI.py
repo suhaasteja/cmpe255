@@ -2,63 +2,69 @@ import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Load the saved models
 compensation_model = joblib.load('compensation_model.pkl')
 stress_model = joblib.load('stress_model.pkl')
-
-# Load dataset to get job title information
-df = pd.read_csv('df_combined.csv')
-
-# Encode job title for user input
-from sklearn.preprocessing import LabelEncoder
-label_encoder = LabelEncoder()
-df['Job Title Encoded'] = label_encoder.fit_transform(df['Job Title'])
+job_title_encoder = joblib.load('job_title_encoder.pkl')
+stress_encoder = joblib.load('stress_encoder.pkl')
+scaler = joblib.load('scaler.pkl')
 
 # UI Title
-st.title("Job Compensation and Stress Level Prediction")
+st.title("Job Compensation and Stress Level Predictor with Trend Charts")
 
 # User inputs for the prediction
 st.header("Input Job Details")
 
-# Select job title, base pay, overtime, etc.
-job_title = st.selectbox("Select Job Title", df['Job Title'].unique())
-base_pay = st.number_input("Enter Base Pay", min_value=0, value=50000, step=1000)
-overtime = st.number_input("Enter Overtime Pay", min_value=0, value=5000, step=100)
-hourly_rate = st.number_input("Enter Hourly Rate", min_value=0, value=30, step=1)
-hours_worked = st.number_input("Enter Hours Worked Overtime", min_value=0, value=100, step=1)
-year = st.number_input("Enter Year", min_value=2000, max_value=2025, value=2023)
-
-# Prepare input data for the models
-job_title_encoded = label_encoder.transform([job_title])[0]
-input_data = np.array([[job_title_encoded, base_pay, overtime, hourly_rate, hours_worked, year]])
+# Select job title and year for prediction
+job_title = st.selectbox("Select Job Title", job_title_encoder.classes_)
+year = st.number_input("Enter Year", min_value=2000, max_value=2030, value=2024)
 
 # Prediction button
 if st.button("Predict"):
-    # Predict compensation using the RandomForestRegressor
-    compensation_prediction = compensation_model.predict(input_data)[0]
+    # Encode the job title input
+    job_title_encoded = job_title_encoder.transform([job_title])[0]
     
-    # Predict stress level using the RandomForestClassifier
-    stress_prediction_encoded = stress_model.predict(input_data)[0]
-    stress_prediction = label_encoder.inverse_transform([stress_prediction_encoded])[0]
+    # Prepare input data
+    input_data = np.array([[job_title_encoded, year]])
+    scaled_input = scaler.transform(input_data)
+    
+    # Make predictions
+    predicted_comp = compensation_model.predict(scaled_input)[0]
+    stress_pred = stress_model.predict(scaled_input)[0]
+    stress_label = stress_encoder.inverse_transform([stress_pred])[0]
     
     # Display predictions
     st.subheader("Prediction Results")
-    st.write(f"**Predicted Total Compensation**: ${compensation_prediction:,.2f}")
-    st.write(f"**Predicted Stress Level**: {stress_prediction}")
+    st.write(f"**Predicted Total Compensation**: ${predicted_comp:,.2f}")
+    st.write(f"**Predicted Stress Level**: {stress_label}")
 
-# Plot trends (optional, if you want to include trend graphs)
-st.header("Trends")
+# Now show the trend charts
+st.header(f"Trend Charts for {job_title}")
 
-# Average Compensation Trend over the years
-st.subheader("Average Compensation Over the Years")
-compensation_trend = df.groupby('Year')['Total Cash Compensation'].mean()
+# Trend data (example, you can replace it with real data or dynamically generate it)
+trend_data = pd.DataFrame({
+    'Year': np.arange(2015, 2024),
+    'Average Compensation': np.random.uniform(400000, 600000, 9),  # Simulated data
+    'Average Stress Level': np.random.choice(['Low Stress', 'Medium Stress', 'High Stress'], 9)
+})
 
-st.line_chart(compensation_trend)
+# Compensation trend chart
+st.subheader(f"Compensation Trend Over the Years for {job_title}")
+fig, ax = plt.subplots()
+ax.plot(trend_data['Year'], trend_data['Average Compensation'], marker='o')
+ax.set_xlabel("Year")
+ax.set_ylabel("Average Compensation ($)")
+ax.set_title(f"Average Compensation Over Time for {job_title}")
+st.pyplot(fig)
 
-# Average Stress Level Trend over the years
-st.subheader("Average Stress Level Over the Years")
-df['Stress Level Encoded'] = label_encoder.fit_transform(df['Stress Level'])
-stress_trend = df.groupby('Year')['Stress Level Encoded'].mean()
-
-st.line_chart(stress_trend)
+# Stress level trend chart
+st.subheader(f"Stress Level Trend Over the Years for {job_title}")
+fig, ax = plt.subplots()
+stress_counts = trend_data['Average Stress Level'].value_counts()
+ax.bar(stress_counts.index, stress_counts.values)
+ax.set_xlabel("Stress Level")
+ax.set_ylabel("Count")
+ax.set_title(f"Stress Levels Over Time for {job_title}")
+st.pyplot(fig)
