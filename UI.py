@@ -11,6 +11,18 @@ job_title_encoder = joblib.load('job_title_encoder.pkl')
 stress_encoder = joblib.load('stress_encoder.pkl')
 scaler = joblib.load('scaler.pkl')
 
+# Load the dataset
+df_combined = pd.read_csv('df_combined.csv')
+
+# Helper function to get trend data
+def get_trend_data(job_title):
+    filtered_data = df_combined[df_combined['Job Title'] == job_title]
+    trend_data = filtered_data.groupby('Year').agg(
+        Average_Compensation=('Total Cash Compensation', 'mean'),
+        Average_Stress_Level=('Stress Level', lambda x: x.mode()[0] if len(x) > 0 else None)
+    ).reset_index()
+    return trend_data
+
 # UI Title
 st.title("Job Compensation and Stress Level Predictor with Trend Charts")
 
@@ -18,7 +30,7 @@ st.title("Job Compensation and Stress Level Predictor with Trend Charts")
 st.header("Input Job Details")
 
 # Select job title and year for prediction
-job_title = st.selectbox("Select Job Title", job_title_encoder.classes_)
+job_title = st.selectbox("Select Job Title", df_combined['Job Title'].unique())
 year = st.number_input("Enter Year", min_value=2000, max_value=2030, value=2024)
 
 # Prediction button
@@ -43,17 +55,13 @@ if st.button("Predict"):
 # Now show the trend charts
 st.header(f"Trend Charts for {job_title}")
 
-# Trend data (example, you can replace it with real data or dynamically generate it)
-trend_data = pd.DataFrame({
-    'Year': np.arange(2015, 2024),
-    'Average Compensation': np.random.uniform(400000, 600000, 9),  # Simulated data
-    'Average Stress Level': np.random.choice(['Low Stress', 'Medium Stress', 'High Stress'], 9)
-})
+# Get real trend data
+trend_data = get_trend_data(job_title)
 
 # Compensation trend chart
 st.subheader(f"Compensation Trend Over the Years for {job_title}")
 fig, ax = plt.subplots()
-ax.plot(trend_data['Year'], trend_data['Average Compensation'], marker='o')
+ax.plot(trend_data['Year'], trend_data['Average_Compensation'], marker='o')
 ax.set_xlabel("Year")
 ax.set_ylabel("Average Compensation ($)")
 ax.set_title(f"Average Compensation Over Time for {job_title}")
@@ -62,7 +70,7 @@ st.pyplot(fig)
 # Stress level trend chart
 st.subheader(f"Stress Level Trend Over the Years for {job_title}")
 fig, ax = plt.subplots()
-stress_counts = trend_data['Average Stress Level'].value_counts()
+stress_counts = trend_data['Average_Stress_Level'].value_counts()
 ax.bar(stress_counts.index, stress_counts.values)
 ax.set_xlabel("Stress Level")
 ax.set_ylabel("Count")
