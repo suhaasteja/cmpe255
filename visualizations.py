@@ -2,17 +2,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the dataset
-file_path = 'df_combined.csv'
+file_path = 'df_filtered.csv'
 df = pd.read_csv(file_path)
 
-# Plot the histograms for Base Pay and Overtime
+# Plot the histograms for Total Cash Compensation and Overtime
 plt.figure(figsize=(12, 6))
 
-# Histogram for Base Pay
+# Histogram for Total Cash Compensation
 plt.subplot(1, 2, 1)
-plt.hist(df['Base Pay'], bins=30, color='blue', alpha=0.7, edgecolor='black')
-plt.title('Distribution of Base Pay')
-plt.xlabel('Base Pay')
+plt.hist(df['Total Cash Compensation'], bins=30, color='blue', alpha=0.7, edgecolor='black')
+plt.title('Distribution of Total Cash Compensation')
+plt.xlabel('Total Cash Compensation')
 plt.ylabel('Frequency')
 
 # Histogram for Overtime

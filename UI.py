@@ -12,15 +12,21 @@ stress_encoder = joblib.load('stress_encoder.pkl')
 scaler = joblib.load('scaler.pkl')
 
 # Load the dataset
-df_combined = pd.read_csv('df_combined.csv')
+df_filtered = pd.read_csv('df_filtered.csv')
 
 # Helper function to get trend data
 def get_trend_data(job_title):
-    filtered_data = df_combined[df_combined['Job Title'] == job_title]
+    # Convert stress levels to numerical values: low=0, medium=1, high=2
+    stress_mapping = {'Low Stress': 0, 'Medium Stress': 50, 'High Stress': 100}
+    df_filtered['Stress Level Numeric'] = df_filtered['Stress Level'].map(stress_mapping)
+    
+    filtered_data = df_filtered[df_filtered['Job Title'] == job_title]
+    
     trend_data = filtered_data.groupby('Year').agg(
         Average_Compensation=('Total Cash Compensation', 'mean'),
-        Average_Stress_Level=('Stress Level', lambda x: x.mode()[0] if len(x) > 0 else None)
+        Average_Stress_Level=('Stress Level Numeric', 'mean')  # Now using average of numeric stress levels
     ).reset_index()
+    
     return trend_data
 
 # UI Title
@@ -30,7 +36,7 @@ st.title("Job Compensation and Stress Level Predictor with Trend Charts")
 st.header("Input Job Details")
 
 # Select job title and year for prediction
-job_title = st.selectbox("Select Job Title", df_combined['Job Title'].unique())
+job_title = st.selectbox("Select Job Title", df_filtered['Job Title'].unique())
 year = st.number_input("Enter Year", min_value=2000, max_value=2030, value=2024)
 
 # Prediction button
@@ -70,9 +76,9 @@ st.pyplot(fig)
 # Stress level trend chart
 st.subheader(f"Stress Level Trend Over the Years for {job_title}")
 fig, ax = plt.subplots()
-stress_counts = trend_data['Average_Stress_Level'].value_counts()
-ax.bar(stress_counts.index, stress_counts.values)
-ax.set_xlabel("Stress Level")
-ax.set_ylabel("Count")
-ax.set_title(f"Stress Levels Over Time for {job_title}")
+ax.plot(trend_data['Year'], trend_data['Average_Stress_Level'], marker='o', color='orange')
+ax.set_xlabel("Year")
+ax.set_ylabel("Average Stress Level Percentage")
+ax.set_ylim(0, 100)
+ax.set_title(f"Average Stress Level Over Time for {job_title}")
 st.pyplot(fig)
