@@ -8,7 +8,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 # Page configuration
 st.set_page_config(
-    page_title="Employee Compensation & Overtime_Likelihood Predictor",
+    page_title="Employee Compensation & overtime_likelihood Predictor",
     page_icon="💼",
     layout="wide"
 )
@@ -19,9 +19,9 @@ def load_models():
     try:
         return {
             'compensation': joblib.load('compensation_model.pkl'),
-            'Overtime_Likelihood': joblib.load('Overtime_Likelihood_model.pkl'),
+            'overtime_likelihood': joblib.load('overtime_likelihood_model.pkl'),
             'job_encoder': joblib.load('job_title_encoder.pkl'),
-            'Overtime_Likelihood_encoder': joblib.load('Overtime_Likelihood_encoder.pkl'),
+            'overtime_likelihood_encoder': joblib.load('overtime_likelihood_encoder.pkl'),
             'scaler': joblib.load('scaler.pkl')
         }
     except Exception as e:
@@ -51,9 +51,9 @@ df, inflation_data = load_data()
 poly = PolynomialFeatures(degree=2)
 
 # Title and description
-st.title("🎯 Enhanced Employee Compensation & Overtime_Likelihood Predictor")
+st.title("🎯 Enhanced Employee Compensation & overtime_likelihood Predictor")
 st.markdown("""
-    This advanced tool predicts employee compensation and Overtime_Likelihood levels using machine learning models
+    This advanced tool predicts employee compensation and overtime_likelihood levels using machine learning models
     trained on historical data, incorporating economic factors like inflation.
 """)
 
@@ -93,7 +93,7 @@ if models and df is not None and inflation_data is not None:
         st.header("📊 Analysis Options")
         show_historical = st.checkbox("Show Historical Trends", value=True)
         show_compensation_distribution = st.checkbox("Show Compensation Distribution", value=True)
-        show_Overtime_Likelihood_analysis = st.checkbox("Show Overtime_Likelihood Analysis", value=True)
+        show_overtime_likelihood_analysis = st.checkbox("Show overtime_likelihood Analysis", value=True)
 
     # Main content area
     col1, col2 = st.columns([3, 2])
@@ -130,8 +130,8 @@ if models and df is not None and inflation_data is not None:
                     
                     # Make predictions
                     comp_pred = models['compensation'].predict(input_data)[0]
-                    Overtime_Likelihood_pred = models['Overtime_Likelihood'].predict(input_data)[0]
-                    Overtime_Likelihood_label = models['Overtime_Likelihood_encoder'].inverse_transform([Overtime_Likelihood_pred])[0]
+                    overtime_likelihood_pred = models['overtime_likelihood'].predict(input_data)[0]
+                    overtime_likelihood_label = models['overtime_likelihood_encoder'].inverse_transform([overtime_likelihood_pred])[0]
                     
                     # Display predictions
                     col_comp1, col_comp2 = st.columns(2)
@@ -140,7 +140,7 @@ if models and df is not None and inflation_data is not None:
                     with col_comp2:
                         st.metric("Inflation-Adjusted", f"${comp_pred * (1 + inflation):,.2f}")
                     
-                    st.info(f"Predicted Overtime_Likelihood Level: **{Overtime_Likelihood_label}**")
+                    st.info(f"Predicted overtime_likelihood Level: **{overtime_likelihood_label}**")
                     
                     # Display additional insights
                     st.markdown("### Additional Insights")
@@ -165,7 +165,7 @@ if models and df is not None and inflation_data is not None:
                     })
     
     # Display visualizations
-    if show_historical or show_compensation_distribution or show_Overtime_Likelihood_analysis:
+    if show_historical or show_compensation_distribution or show_overtime_likelihood_analysis:
         with col2:
             job_data = df[df['Job Title'] == job_title].copy()
             
@@ -186,13 +186,13 @@ if models and df is not None and inflation_data is not None:
                 st.pyplot(fig_dist)
                 plt.close()
             
-            if show_Overtime_Likelihood_analysis:
-                st.subheader("😰 Overtime_Likelihood Analysis")
-                Overtime_Likelihood_counts = job_data['Overtime_Likelihood Level'].value_counts()
-                fig_Overtime_Likelihood = plt.figure(figsize=(8, 4))
-                plt.pie(Overtime_Likelihood_counts, labels=Overtime_Likelihood_counts.index, autopct='%1.1f%%')
-                plt.title('Overtime_Likelihood Level Distribution')
-                st.pyplot(fig_Overtime_Likelihood)
+            if show_overtime_likelihood_analysis:
+                st.subheader("😰 overtime_likelihood Analysis")
+                overtime_likelihood_counts = job_data['overtime_likelihood Level'].value_counts()
+                fig_overtime_likelihood = plt.figure(figsize=(8, 4))
+                plt.pie(overtime_likelihood_counts, labels=overtime_likelihood_counts.index, autopct='%1.1f%%')
+                plt.title('overtime_likelihood Level Distribution')
+                st.pyplot(fig_overtime_likelihood)
                 plt.close()
 
     # Footer
